@@ -1,0 +1,413 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		11442B98A3A84EC4BFDEBBAC /* AetherApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 059D02A1C88443D38C370EA8 /* AetherApp.swift */; };
+		3B724CBB7DE94F6F8D0031FF /* SteamGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C6589DEF087457990FE69A8 /* SteamGame.swift */; };
+		828B0BB3E74749C8910D50E4 /* GPTKManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8C6B19CA958430CB158C25C /* GPTKManager.swift */; };
+		8466580A18A24C9B902325F9 /* WineProcess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 883927A0602D4C6B9C65433C /* WineProcess.swift */; };
+		9A8238A1BE2C42768654F8C1 /* SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FBA71BE10845418106DF58 /* SetupView.swift */; };
+		A9A733D230624981BE52C58A /* BottleManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F839EFBB07040AE88159D3B /* BottleManager.swift */; };
+		AA14DA4EDE6A43A2AFD6130E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B40347EA58334C95B9A4581F /* Assets.xcassets */; };
+		AE13075E93724134A56D87A9 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6359019245A54B709DCD4B1C /* AppState.swift */; };
+		B3ACB139BF604E94AD237AF6 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C62F31E184544EBA8B1B4E6D /* LibraryView.swift */; };
+		CC3A1F2D8B4E4A9F91DE2C77 /* SteamMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD4B8E1A3C2F4D5E87F1A923 /* SteamMonitor.swift */; };
+		E56C801E1A274B518C460B97 /* SteamManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF0E737F71E64876B8A6B8C5 /* SteamManager.swift */; };
+		E8787C804E9B4EE9BD61D2D3 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1044FDB4A09B463C9CCB997D /* ContentView.swift */; };
+		ECC2E3E9010345AD9B55740E /* Bottle.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC435540E0614FE782029F67 /* Bottle.swift */; };
+		F1A622359F70455BA5390375 /* GameDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E74FE4E5E1F47EAB04A8D9E /* GameDetailView.swift */; };
+		3DB67A9A01144C89A99A12E0813D2ACB /* InstalledApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FBFEAA9B2DA4B2CABD0F38A9520D81D /* InstalledApp.swift */; };
+		625D346FE320459B9111C64B574FD28D /* SoftwareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C26E7DD14934A7F9F0ACF8D16E7A78F /* SoftwareView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		059D02A1C88443D38C370EA8 /* AetherApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AetherApp.swift; sourceTree = "<group>"; };
+		1044FDB4A09B463C9CCB997D /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		10B068892EEC4DDFAC06CE04 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		1E74FE4E5E1F47EAB04A8D9E /* GameDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameDetailView.swift; sourceTree = "<group>"; };
+		2F839EFBB07040AE88159D3B /* BottleManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottleManager.swift; sourceTree = "<group>"; };
+		6359019245A54B709DCD4B1C /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		883927A0602D4C6B9C65433C /* WineProcess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WineProcess.swift; sourceTree = "<group>"; };
+		8C6589DEF087457990FE69A8 /* SteamGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SteamGame.swift; sourceTree = "<group>"; };
+		B40347EA58334C95B9A4581F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B8C6B19CA958430CB158C25C /* GPTKManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPTKManager.swift; sourceTree = "<group>"; };
+		C0FBA71BE10845418106DF58 /* SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupView.swift; sourceTree = "<group>"; };
+		C62F31E184544EBA8B1B4E6D /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
+		DD4B8E1A3C2F4D5E87F1A923 /* SteamMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SteamMonitor.swift; sourceTree = "<group>"; };
+		DF0E737F71E64876B8A6B8C5 /* SteamManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SteamManager.swift; sourceTree = "<group>"; };
+		EC435540E0614FE782029F67 /* Bottle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bottle.swift; sourceTree = "<group>"; };
+		7FBFEAA9B2DA4B2CABD0F38A9520D81D /* InstalledApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstalledApp.swift; sourceTree = "<group>"; };
+		6C26E7DD14934A7F9F0ACF8D16E7A78F /* SoftwareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoftwareView.swift; sourceTree = "<group>"; };
+		F9A2BC1244CF47B2A0E58D5F /* Aether.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Aether.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A278611E95E24543A45F9179 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		093C15581245438BA9B1E956 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				B8C6B19CA958430CB158C25C /* GPTKManager.swift */,
+				2F839EFBB07040AE88159D3B /* BottleManager.swift */,
+				DF0E737F71E64876B8A6B8C5 /* SteamManager.swift */,
+				883927A0602D4C6B9C65433C /* WineProcess.swift */,
+				DD4B8E1A3C2F4D5E87F1A923 /* SteamMonitor.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		2B4DA4D62A244B76953DCC18 /* Aether */ = {
+			isa = PBXGroup;
+			children = (
+				059D02A1C88443D38C370EA8 /* AetherApp.swift */,
+				1044FDB4A09B463C9CCB997D /* ContentView.swift */,
+				093C15581245438BA9B1E956 /* Core */,
+				2CF4508B58CF47CDA51DEEC4 /* Models */,
+				AF288486FB1D4AE58D176376 /* Views */,
+				B40347EA58334C95B9A4581F /* Assets.xcassets */,
+				10B068892EEC4DDFAC06CE04 /* Info.plist */,
+			);
+			path = Aether;
+			sourceTree = "<group>";
+		};
+		2CF4508B58CF47CDA51DEEC4 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				6359019245A54B709DCD4B1C /* AppState.swift */,
+				EC435540E0614FE782029F67 /* Bottle.swift */,
+				8C6589DEF087457990FE69A8 /* SteamGame.swift */,
+				7FBFEAA9B2DA4B2CABD0F38A9520D81D /* InstalledApp.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		AF288486FB1D4AE58D176376 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				C0FBA71BE10845418106DF58 /* SetupView.swift */,
+				C62F31E184544EBA8B1B4E6D /* LibraryView.swift */,
+				1E74FE4E5E1F47EAB04A8D9E /* GameDetailView.swift */,
+				6C26E7DD14934A7F9F0ACF8D16E7A78F /* SoftwareView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		D52EA0A459F24CA6875BD1B0 = {
+			isa = PBXGroup;
+			children = (
+				2B4DA4D62A244B76953DCC18 /* Aether */,
+				F2A93C7B0E584CDBA1C8BB5D /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F2A93C7B0E584CDBA1C8BB5D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F9A2BC1244CF47B2A0E58D5F /* Aether.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A6B551D7891D4C3681001EA7 /* Aether */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E3A82C238FE04F338DFA33F9 /* Build configuration list for PBXNativeTarget "Aether" */;
+			buildPhases = (
+				6A3667E700B24890AEEAF4D5 /* Sources */,
+				A278611E95E24543A45F9179 /* Frameworks */,
+				C5910E0CCE9E4CFDA239CC88 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Aether;
+			productName = Aether;
+			productReference = F9A2BC1244CF47B2A0E58D5F /* Aether.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		402777D59F7B4E7798EFB016 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1540;
+				LastUpgradeCheck = 2650;
+				TargetAttributes = {
+					A6B551D7891D4C3681001EA7 = {
+						CreatedOnToolsVersion = 15.4;
+					};
+				};
+			};
+			buildConfigurationList = EBE83F10173347D1AB1D9601 /* Build configuration list for PBXProject "Aether" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = D52EA0A459F24CA6875BD1B0;
+			productRefGroup = F2A93C7B0E584CDBA1C8BB5D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A6B551D7891D4C3681001EA7 /* Aether */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C5910E0CCE9E4CFDA239CC88 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA14DA4EDE6A43A2AFD6130E /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		6A3667E700B24890AEEAF4D5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				11442B98A3A84EC4BFDEBBAC /* AetherApp.swift in Sources */,
+				E8787C804E9B4EE9BD61D2D3 /* ContentView.swift in Sources */,
+				828B0BB3E74749C8910D50E4 /* GPTKManager.swift in Sources */,
+				A9A733D230624981BE52C58A /* BottleManager.swift in Sources */,
+				E56C801E1A274B518C460B97 /* SteamManager.swift in Sources */,
+				8466580A18A24C9B902325F9 /* WineProcess.swift in Sources */,
+				ECC2E3E9010345AD9B55740E /* Bottle.swift in Sources */,
+				3B724CBB7DE94F6F8D0031FF /* SteamGame.swift in Sources */,
+				AE13075E93724134A56D87A9 /* AppState.swift in Sources */,
+				9A8238A1BE2C42768654F8C1 /* SetupView.swift in Sources */,
+				B3ACB139BF604E94AD237AF6 /* LibraryView.swift in Sources */,
+				F1A622359F70455BA5390375 /* GameDetailView.swift in Sources */,
+				CC3A1F2D8B4E4A9F91DE2C77 /* SteamMonitor.swift in Sources */,
+				3DB67A9A01144C89A99A12E0813D2ACB /* InstalledApp.swift in Sources */,
+				625D346FE320459B9111C64B574FD28D /* SoftwareView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1259FB20D8BF453291E07821 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_CYCLES = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 392255K3LJ;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		4F190320310A4A1CB9CD809E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_CYCLES = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 392255K3LJ;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		8E6EA09092C0410690DA3977 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Aether/Aether.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Aether/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aether.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		BF4E9E456A50470886065D61 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Aether/Aether.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Aether/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aether.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E3A82C238FE04F338DFA33F9 /* Build configuration list for PBXNativeTarget "Aether" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BF4E9E456A50470886065D61 /* Debug */,
+				8E6EA09092C0410690DA3977 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		EBE83F10173347D1AB1D9601 /* Build configuration list for PBXProject "Aether" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4F190320310A4A1CB9CD809E /* Debug */,
+				1259FB20D8BF453291E07821 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 402777D59F7B4E7798EFB016 /* Project object */;
+}

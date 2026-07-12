@@ -375,6 +375,7 @@ private struct SearchBar: View {
 private struct RendererTestView: View {
     @EnvironmentObject var appState: AppState
 
+    @State private var wineBuild: GameConfig.WineBuild = .stable
     @State private var renderer: GameConfig.Renderer  = .auto
     @State private var dxVersion: GameConfig.DXVersion = .dx11
     @State private var status: TestStatus = .idle
@@ -387,7 +388,11 @@ private struct RendererTestView: View {
     private var hasVKD3D: Bool {
         FileManager.default.fileExists(atPath: toolsDir.appendingPathComponent("d3d12.dll").path)
     }
-    private var needsVKD3D: Bool { renderer == .dxvk && dxVersion == .dx12 }
+    // VKD3D is only needed on the stable build's DXVK path; GPTK's D3DMetal
+    // translates DX12 natively.
+    private var needsVKD3D: Bool {
+        wineBuild == .stable && renderer == .dxvk && dxVersion == .dx12
+    }
 
     enum TestStatus: Equatable {
         case idle, running, passed, failed(String)
@@ -430,24 +435,57 @@ private struct RendererTestView: View {
 
                 Divider()
 
-                // Renderer picker
+                // Wine build picker
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Renderer").font(.headline).foregroundStyle(.secondary)
-                    Picker("Renderer", selection: $renderer) {
-                        ForEach(GameConfig.Renderer.allCases) { r in
-                            Text(r.rawValue).tag(r)
+                    Text("Wine Build").font(.headline).foregroundStyle(.secondary)
+                    Picker("Wine Build", selection: $wineBuild) {
+                        ForEach(GameConfig.WineBuild.allCases) { b in
+                            Text(b.rawValue).tag(b)
                         }
                     }
                     .pickerStyle(.segmented)
+                    if wineBuild == .gptk {
+                        if GPTKManager.isGPTKInstalled {
+                            Text("Runs in an isolated test prefix, not your Steam bottle. First run takes about 30 seconds extra while the prefix is created.")
+                                .font(.caption).foregroundStyle(.tertiary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        } else {
+                            Label("GPTK not installed. The test will fall back to Stable.",
+                                  systemImage: "exclamationmark.triangle.fill")
+                                .font(.caption).foregroundStyle(.orange)
+                        }
+                    }
                 }
 
-                // DX version picker (only meaningful for D3DMetal/DXVK, hidden for MoltenVK)
-                if renderer != .moltenVK {
+                // Renderer picker (GPTK has no Vulkan driver: D3DMetal only)
+                if wineBuild == .gptk {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Renderer").font(.headline).foregroundStyle(.secondary)
+                        HStack(spacing: 6) {
+                            Image(systemName: "lock.fill").font(.caption)
+                            Text("D3DMetal (fixed by GPTK build)")
+                        }
+                        .foregroundStyle(.secondary)
+                    }
+                } else {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Renderer").font(.headline).foregroundStyle(.secondary)
+                        Picker("Renderer", selection: $renderer) {
+                            ForEach(GameConfig.Renderer.allCases) { r in
+                                Text(r == .auto ? "Auto (WineD3D)" : r.rawValue).tag(r)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    }
+                }
+
+                // DX version picker (hidden for MoltenVK, which is Vulkan-native)
+                if wineBuild == .gptk || renderer != .moltenVK {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
                             Text("DirectX Version").font(.headline).foregroundStyle(.secondary)
-                            if renderer == .auto {
-                                Text("informational — D3DMetal handles all")
+                            if wineBuild == .gptk {
+                                Text("D3DMetal translates all versions")
                                     .font(.caption).foregroundStyle(.tertiary)
                             }
                         }
@@ -458,11 +496,12 @@ private struct RendererTestView: View {
                         }
                         .pickerStyle(.segmented)
 
-                        if renderer == .auto && (dxVersion == .dx10 || dxVersion == .dx11) {
-                            Label("D3DMetal DX10/DX11 cannot be tested standalone.",
+                        if wineBuild == .stable && renderer == .auto
+                            && (dxVersion == .dx10 || dxVersion == .dx11) {
+                            Label("WineD3D DX10/DX11 cannot be tested standalone.",
                                   systemImage: "info.circle.fill")
                                 .font(.caption).foregroundStyle(.orange)
-                            Text("wined3d's D3D11 adapter needs Steam's display context. Games work fine via Steam. The test will open an explanatory dialog and exit.")
+                            Text("WineD3D's D3D11 adapter needs Steam's display context. Games work fine via Steam, or switch to the GPTK build to test with D3DMetal.")
                                 .font(.caption2).foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -538,9 +577,16 @@ private struct RendererTestView: View {
     }
 
     private var configSummary: String {
-        let dll = WineProcess.dllOverrides(renderer: renderer, dxVersion: dxVersion)
-        let api = renderer == .moltenVK ? "Vulkan (native)" :
-                  "\(dxVersion.rawValue) via \(renderer.rawValue)"
+        let effectiveRenderer: GameConfig.Renderer = wineBuild == .gptk ? .auto : renderer
+        let dll = WineProcess.dllOverrides(renderer: effectiveRenderer, dxVersion: dxVersion)
+        let api: String
+        if wineBuild == .gptk {
+            api = "\(dxVersion.rawValue) via D3DMetal (GPTK)"
+        } else if renderer == .moltenVK {
+            api = "Vulkan (native)"
+        } else {
+            api = "\(dxVersion.rawValue) via \(renderer == .auto ? "WineD3D" : renderer.rawValue)"
+        }
         return "API: \(api)\nWINEDLLOVERRIDES: \(dll)"
     }
 
@@ -551,7 +597,7 @@ private struct RendererTestView: View {
 
         do {
             let process = try WineProcess.launchRendererTest(
-                bottle: bottle, renderer: renderer, dxVersion: dxVersion)
+                bottle: bottle, renderer: renderer, dxVersion: dxVersion, build: wineBuild)
             testProcess = process
             DispatchQueue.global().async {
                 process.waitUntilExit()
@@ -559,8 +605,8 @@ private struct RendererTestView: View {
                     if process.terminationStatus == 0 {
                         status = .passed
                     } else if process.terminationStatus == 99 {
-                        // Graceful D3DMetal DX10/DX11 limitation (VEH guard fired)
-                        status = .failed("D3DMetal DX10/DX11 not supported standalone — use DXVK")
+                        // Graceful WineD3D DX10/DX11 limitation (VEH guard fired)
+                        status = .failed("WineD3D DX10/DX11 not supported standalone, use DXVK or GPTK")
                     } else if process.terminationReason == .exit && process.terminationStatus != 0 {
                         status = .failed("Exit code \(process.terminationStatus)")
                     } else {

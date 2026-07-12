@@ -66,7 +66,7 @@ private struct WelcomeStep: View {
             VStack(spacing: 8) {
                 Text("Welcome to Aether")
                     .font(.largeTitle.bold())
-                Text("Run Windows Steam games on your Mac — for free, no CrossOver required.")
+                Text("Run Windows Steam games on your Mac, for free, no CrossOver required.")
                     .font(.title3)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)

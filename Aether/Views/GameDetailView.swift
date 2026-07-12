@@ -154,14 +154,52 @@ struct GameDetailView: View {
                 .font(.headline)
                 .foregroundStyle(.secondary)
 
-            Picker("Renderer", selection: $game.config.renderer) {
-                ForEach(GameConfig.Renderer.allCases) { r in
-                    Text(r.rawValue).tag(r)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Wine Build")
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Picker("Wine Build", selection: $game.config.wineBuild) {
+                        ForEach(GameConfig.WineBuild.allCases) { b in
+                            Text(b.rawValue).tag(b)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(maxWidth: 300)
+                }
+                if game.config.wineBuild == .gptk {
+                    if GPTKManager.isGPTKInstalled {
+                        Text("Apple D3DMetal handles DX9 through DX12. 32-bit games run via wow64. First launch may take longer while the prefix updates.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        Label("GPTK not installed. Falls back to Stable.", systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
                 }
             }
-            .pickerStyle(.segmented)
 
-            if game.config.renderer == .dxvk {
+            if game.config.wineBuild == .gptk {
+                // GPTK has no Vulkan driver: DXVK and MoltenVK cannot work under it,
+                // so the renderer is always D3DMetal and the picker is hidden.
+                HStack(spacing: 6) {
+                    Image(systemName: "lock.fill").font(.caption)
+                    Text("Renderer: D3DMetal (fixed by GPTK build)")
+                        .font(.callout)
+                }
+                .foregroundStyle(.secondary)
+            } else {
+                Picker("Renderer", selection: $game.config.renderer) {
+                    ForEach(GameConfig.Renderer.allCases) { r in
+                        Text(rendererLabel(r)).tag(r)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+
+            if game.config.wineBuild == .stable, game.config.renderer == .dxvk {
                 HStack {
                     Text("DX Version")
                         .foregroundStyle(.secondary)
@@ -234,6 +272,12 @@ struct GameDetailView: View {
             startPoint: .top, endPoint: .bottom
         )
         .ignoresSafeArea()
+    }
+
+    // Display-only relabel: the stored rawValue "Auto (D3DMetal)" predates the
+    // GPTK build and is misleading on stable Wine, where auto means WineD3D.
+    private func rendererLabel(_ r: GameConfig.Renderer) -> String {
+        r == .auto ? "Auto (WineD3D)" : r.rawValue
     }
 
     private func launch() {

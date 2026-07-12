@@ -73,19 +73,18 @@ struct WineProcess {
     }
 
     // Build WINEDLLOVERRIDES from renderer + DX version so per-game config is
-    // automatic — no manual env var hacks needed in Extra Env Vars.
+    // automatic, no manual env var hacks needed in Extra Env Vars.
     static func dllOverrides(renderer: GameConfig.Renderer,
                              dxVersion: GameConfig.DXVersion,
                              useDDrawWrapper: Bool = false,
                              enableDComp: Bool = false) -> String {
         let dcomp = enableDComp ? "" : ";dcomp=n"
         let fixed = "steamservice=d;winemenubuilder.exe=d\(dcomp)"
-        // GameOverlayRenderer.dll=b makes Wine load the stub from its own i386-windows/
-        // builtin directory instead of the real DLL at the full path Steam provides.
-        // =n and =d both fail: =n loads the real file via full path, =d crashes steam_api.dll.
-        // The stub primes D3D9 in DllMain so cnc-ddraw's Direct3DCreate9 succeeds,
-        // then OverlayHookD3D3 is a no-op so no Present hook and no Reset are installed.
-        let ddraw = useDDrawWrapper ? ";ddraw=n,b;GameOverlayRenderer.dll=b" : ""
+        // Steam's GameOverlayRenderer.dll/.dll64 are replaced with no-op stubs directly
+        // in the bottle's Steam directory. Wine's =b builtin override doesn't work for
+        // MinGW-compiled DLLs (Wine rejects them as "not a builtin"). Replacing the file
+        // directly ensures the stub is always loaded regardless of WINEDLLOVERRIDES.
+        let ddraw = useDDrawWrapper ? ";ddraw=n,b" : ""
         switch renderer {
         case .auto, .moltenVK:
             return "\(fixed);dxgi=b;d3d11=b;d3d10core=b;d3d9=b\(ddraw)"
@@ -109,13 +108,30 @@ struct WineProcess {
         config: GameConfig,
         installDir: String? = nil
     ) throws {
-        var env = GPTKManager.baseEnvironment(for: bottle)
-        env["WINEDLLOVERRIDES"] = dllOverrides(renderer: config.renderer,
+        // GPTK has no Vulkan driver (winevulkan.dll but no libMoltenVK), so DXVK
+        // and MoltenVK renderers cannot work under it. Coerce to D3DMetal builtins.
+        let renderer: GameConfig.Renderer =
+            config.wineBuild == .gptk ? .auto : config.renderer
+        var env = GPTKManager.baseEnvironment(for: bottle, build: config.wineBuild)
+        env["WINEDLLOVERRIDES"] = dllOverrides(renderer: renderer,
                                                dxVersion: config.dxVersion,
                                                useDDrawWrapper: config.useDDrawWrapper,
                                                enableDComp: config.enableDComp)
+        // Steam's CEF spawns separate renderer/GPU/utility OS processes, each
+        // owning native windows that Wine's macOS driver has to composite
+        // together. That cross-process window handoff is where a hide/show
+        // race lives: macOS window-server occlusion notifications get
+        // translated back into WM_SHOWWINDOW messages that Steam's own UI
+        // reacts to by re-hiding, producing rapid visible flicker. Folding
+        // everything into one process (--single-process) removes the
+        // cross-process window state entirely; --disable-gpu avoids Steam's
+        // own GPU compositor thread (which runs inline under single-process)
+        // fighting the Vulkan/Metal path used by actual games. This only
+        // affects Steam's own UI smoothness, games launch in their own
+        // separate Wine process untouched by this.
+        env["AETHER_CEF_FLAGS"] = "--disable-gpu --single-process"
         if config.metalHUD {
-            switch config.renderer {
+            switch renderer {
             case .dxvk:
                 env["DXVK_HUD"] = "fps,frametimes,gpuload"
             default:
@@ -134,7 +150,9 @@ struct WineProcess {
             Thread.sleep(forTimeInterval: 1.5)
         }
 
-        guard let winePath = GPTKManager.winePath else { throw WineError.wineBinaryNotFound }
+        guard let winePath = GPTKManager.winePath(for: config.wineBuild) else {
+            throw WineError.wineBinaryNotFound
+        }
 
         // Direct-exe path: bypasses Steam's launcher (which silently fails for some games).
         // Steam is started in the background first so steam_api.dll DRM can connect.
@@ -231,14 +249,19 @@ struct WineProcess {
         exePath: String,
         config: GameConfig
     ) throws {
-        guard let winePath = GPTKManager.winePath else { throw WineError.wineBinaryNotFound }
-        var env = GPTKManager.baseEnvironment(for: bottle)
-        env["WINEDLLOVERRIDES"] = dllOverrides(renderer: config.renderer,
+        guard let winePath = GPTKManager.winePath(for: config.wineBuild) else {
+            throw WineError.wineBinaryNotFound
+        }
+        // Same coercion as launchSteam: GPTK has no Vulkan driver.
+        let renderer: GameConfig.Renderer =
+            config.wineBuild == .gptk ? .auto : config.renderer
+        var env = GPTKManager.baseEnvironment(for: bottle, build: config.wineBuild)
+        env["WINEDLLOVERRIDES"] = dllOverrides(renderer: renderer,
                                                dxVersion: config.dxVersion,
                                                useDDrawWrapper: config.useDDrawWrapper,
                                                enableDComp: config.enableDComp)
         if config.metalHUD {
-            switch config.renderer {
+            switch renderer {
             case .dxvk: env["DXVK_HUD"] = "fps,frametimes,gpuload"
             default:    env["MTL_HUD_ENABLED"] = "1"
             }
@@ -264,21 +287,40 @@ struct WineProcess {
     static func launchRendererTest(
         bottle: Bottle,
         renderer: GameConfig.Renderer,
-        dxVersion: GameConfig.DXVersion
+        dxVersion: GameConfig.DXVersion,
+        build: GameConfig.WineBuild = .stable
     ) throws -> Process {
-        guard let winePath = GPTKManager.winePath else { throw WineError.wineBinaryNotFound }
+        guard let winePath = GPTKManager.winePath(for: build) else {
+            throw WineError.wineBinaryNotFound
+        }
 
         let toolsDir = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Application Support/Aether/Tools")
         let exePath = toolsDir.appendingPathComponent("AetherDXTest.exe")
 
-        var env = GPTKManager.baseEnvironment(for: bottle)
-        env["WINEDLLOVERRIDES"] = dllOverrides(renderer: renderer, dxVersion: dxVersion)
+        // GPTK tests run in their own throwaway prefix: pointing an older Wine
+        // (GPTK base) at the main bottle would downgrade its prefix version.
+        // Wine auto-creates the prefix on first run (adds ~30s once).
+        let testBottle: Bottle
+        if build == .gptk {
+            let prefix = FileManager.default.homeDirectoryForCurrentUser
+                .appendingPathComponent("Library/Application Support/Aether/TestPrefixes/gptk")
+            try? FileManager.default.createDirectory(at: prefix, withIntermediateDirectories: true)
+            testBottle = Bottle(path: prefix)
+        } else {
+            testBottle = bottle
+        }
+
+        // GPTK has no Vulkan driver, so only the D3DMetal builtins are testable.
+        let effectiveRenderer: GameConfig.Renderer = build == .gptk ? .auto : renderer
+
+        var env = GPTKManager.baseEnvironment(for: testBottle, build: build)
+        env["WINEDLLOVERRIDES"] = dllOverrides(renderer: effectiveRenderer, dxVersion: dxVersion)
         env["DXVK_LOG_LEVEL"]   = "none"
 
         let process = Process()
         process.executableURL    = winePath
-        process.arguments        = [exePath.path, renderer.rawValue, dxVersion.apiArg]
+        process.arguments        = [exePath.path, effectiveRenderer.rawValue, dxVersion.apiArg]
         process.environment      = env
         process.currentDirectoryURL = toolsDir
         try process.run()

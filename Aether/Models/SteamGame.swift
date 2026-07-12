@@ -74,6 +74,9 @@ struct CustomGameEntry: Codable, Identifiable {
 struct GameConfig: Codable, Equatable {
     var renderer: Renderer = .auto
     var dxVersion: DXVersion = .dx11
+    /// Which Wine build to launch with. Stable is the Wine 11.x bundle; GPTK is
+    /// Apple's Game Porting Toolkit build with D3DMetal (best for DX11/DX12 games).
+    var wineBuild: WineBuild = .stable
     var esync: Bool = true
     var metalHUD: Bool = false
     var extraEnvVars: [String: String] = [:]
@@ -95,6 +98,30 @@ struct GameConfig: Codable, Equatable {
         case dxvk = "DXVK"
         case moltenVK = "MoltenVK"
         var id: String { rawValue }
+    }
+
+    enum WineBuild: String, Codable, CaseIterable, Identifiable {
+        case stable = "Stable"
+        case gptk = "GPTK (D3DMetal)"
+        var id: String { rawValue }
+    }
+
+    init() {}
+
+    // Custom decoding with per-field defaults so configs saved by older versions
+    // (missing newly added keys) never fail to decode and reset user settings.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        renderer        = (try? c.decode(Renderer.self,  forKey: .renderer))        ?? .auto
+        dxVersion       = (try? c.decode(DXVersion.self, forKey: .dxVersion))       ?? .dx11
+        wineBuild       = (try? c.decode(WineBuild.self, forKey: .wineBuild))       ?? .stable
+        esync           = (try? c.decode(Bool.self,      forKey: .esync))           ?? true
+        metalHUD        = (try? c.decode(Bool.self,      forKey: .metalHUD))        ?? false
+        extraEnvVars    = (try? c.decode([String: String].self, forKey: .extraEnvVars)) ?? [:]
+        launchArgs      = (try? c.decode(String.self,    forKey: .launchArgs))      ?? ""
+        customExePath   = (try? c.decode(String.self,    forKey: .customExePath))   ?? ""
+        useDDrawWrapper = (try? c.decode(Bool.self,      forKey: .useDDrawWrapper)) ?? false
+        enableDComp     = (try? c.decode(Bool.self,      forKey: .enableDComp))     ?? false
     }
 
     enum DXVersion: String, Codable, CaseIterable, Identifiable {

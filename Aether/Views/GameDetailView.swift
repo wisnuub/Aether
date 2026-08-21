@@ -190,10 +190,10 @@ struct GameDetailView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
                         VStack(alignment: .leading, spacing: 4) {
-                            Label("ARM64 Wine not found. Falls back to Stable.", systemImage: "exclamationmark.triangle.fill")
+                            Label("ARM64 Wine not installed. Falls back to Stable.", systemImage: "exclamationmark.triangle.fill")
                                 .font(.caption)
                                 .foregroundStyle(.orange)
-                            Text("Install CrossOver 27 preview (detected automatically) or download ARM64 Wine in Setup.")
+                            Text("Download ARM64 Wine from Setup to enable this build.")
                                 .font(.caption2)
                                 .foregroundStyle(.tertiary)
                                 .fixedSize(horizontal: false, vertical: true)

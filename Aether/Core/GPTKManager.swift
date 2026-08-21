@@ -19,7 +19,6 @@ enum GPTKManager {
         "/usr/local/bin/wine64",
         "/usr/local/bin/wine",
         "/opt/homebrew/bin/wine64",
-        NSHomeDirectory() + "/.local/share/CrossOver/wine/bin/wine64",
     ]
 
     static var winePath: URL? {
@@ -46,54 +45,20 @@ enum GPTKManager {
 
     // MARK: - ARM64 + FEX build
 
-    /// Root for ARM64-native Wine (Gcenx ARM64 builds or CrossOver 27 Wine extracted here).
+    /// Root for Aether's own ARM64-native Wine install.
+    /// Downloaded and managed entirely by Aether — no external dependency.
     static let arm64Root = FileManager.default
         .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         .appendingPathComponent("Aether/Wine-ARM64")
 
-    /// CrossOver 27 ships ARM64-native Wine at these paths.
-    private static let crossOver27Candidates: [String] = [
-        NSHomeDirectory() + "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/wine/bin/wine64",
-        "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/wine/bin/wine64",
-    ]
-
-    /// Returns true if the Mach-O binary at `path` is ARM64-native (not x86_64 / Rosetta).
-    static func isARM64Binary(at path: String) -> Bool {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/file")
-        task.arguments     = [path]
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError  = Pipe()
-        try? task.run()
-        task.waitUntilExit()
-        let out = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-        // ARM64-native binary: "arm64" appears and "x86_64" does not
-        return out.contains("arm64") && !out.contains("x86_64")
-    }
-
-    /// Bundled ARM64 Wine from the Aether/Wine-ARM64 directory (manual install or future auto-download).
-    private static var arm64BundledPath: URL? {
+    /// ARM64 Wine binary from Aether's own managed install directory.
+    /// Returns nil if not yet downloaded — call BottleManager.downloadARM64Wine() to install.
+    static var arm64WinePath: URL? {
         let candidates = [
             arm64Root.appendingPathComponent("Contents/Resources/wine/bin/wine64"),
             arm64Root.appendingPathComponent("bin/wine64"),
         ]
         return candidates.first { FileManager.default.isExecutableFile(atPath: $0.path) }
-    }
-
-    /// ARM64 Wine binary: bundled install first, then CrossOver 27 if its binary is ARM64-native.
-    /// Falls back to nil if nothing ARM64 is found (caller should fall back to stable).
-    static var arm64WinePath: URL? {
-        // 1. Prefer our own managed install directory
-        if let bundled = arm64BundledPath { return bundled }
-        // 2. CrossOver 27 ARM64 preview, detected by checking the binary architecture
-        for path in crossOver27Candidates {
-            guard FileManager.default.isExecutableFile(atPath: path) else { continue }
-            if isARM64Binary(at: path) {
-                return URL(fileURLWithPath: path)
-            }
-        }
-        return nil
     }
 
     static var isARM64WineInstalled: Bool { arm64WinePath != nil }

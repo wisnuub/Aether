@@ -154,6 +154,7 @@ struct GameDetailView: View {
                 .font(.headline)
                 .foregroundStyle(.secondary)
 
+            // Wine build picker + per-build status hint
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     Text("Wine Build")
@@ -165,9 +166,11 @@ struct GameDetailView: View {
                         }
                     }
                     .pickerStyle(.segmented)
-                    .frame(maxWidth: 300)
+                    .frame(maxWidth: 340)
                 }
-                if game.config.wineBuild == .gptk {
+
+                switch game.config.wineBuild {
+                case .gptk:
                     if GPTKManager.isGPTKInstalled {
                         Text("Apple D3DMetal handles DX9 through DX12. 32-bit games run via wow64. First launch may take longer while the prefix updates.")
                             .font(.caption)
@@ -178,15 +181,35 @@ struct GameDetailView: View {
                             .font(.caption)
                             .foregroundStyle(.orange)
                     }
+
+                case .arm64:
+                    if GPTKManager.isARM64WineInstalled {
+                        Text("ARM64-native Wine with FEX x86 emulation — no Rosetta needed. D3DMetal handles all DX versions. Requires macOS 26.5+. 64-bit bottles only.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Label("ARM64 Wine not found. Falls back to Stable.", systemImage: "exclamationmark.triangle.fill")
+                                .font(.caption)
+                                .foregroundStyle(.orange)
+                            Text("Install CrossOver 27 preview (detected automatically) or download ARM64 Wine in Setup.")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+
+                case .stable:
+                    EmptyView()
                 }
             }
 
-            if game.config.wineBuild == .gptk {
-                // GPTK has no Vulkan driver: DXVK and MoltenVK cannot work under it,
-                // so the renderer is always D3DMetal and the picker is hidden.
+            // Renderer picker — locked to D3DMetal for builds that have no Vulkan driver
+            if game.config.wineBuild.usesD3DMetal {
                 HStack(spacing: 6) {
                     Image(systemName: "lock.fill").font(.caption)
-                    Text("Renderer: D3DMetal (fixed by GPTK build)")
+                    Text("Renderer: D3DMetal (fixed for \(game.config.wineBuild == .arm64 ? "ARM64" : "GPTK") build)")
                         .font(.callout)
                 }
                 .foregroundStyle(.secondary)
@@ -295,7 +318,7 @@ struct GameDetailView: View {
                         config: snapshot.config
                     )
                 } else {
-                    try WineProcess.launchSteam(
+                    try await WineProcess.launchSteam(
                         bottle: bottle,
                         gameID: snapshot.id,
                         config: snapshot.config,

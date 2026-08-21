@@ -51,59 +51,48 @@ struct SteamGame: Identifiable, Hashable {
 // MARK: - Custom game persistence
 
 struct CustomGameEntry: Codable, Identifiable {
-    /// Use the exe path as the stable identity so the derived integer ID never drifts.
     var id: String { exePath }
     var name: String
     var exePath: String
     var config: GameConfig
 
-    /// Stable integer ID derived from the exe path.  Offset to a negative range
-    /// so it never collides with real Steam app IDs (always positive).
     var stableID: Int {
         var h = Hasher()
         h.combine(exePath)
         let raw = h.finalize()
-        // Map into [-Int.max/2 ... -1]
         return -(abs(raw % (Int.max / 2)) + 1)
     }
 
-    // Custom Codable because `id` is computed.
     enum CodingKeys: String, CodingKey { case name, exePath, config }
 }
 
 struct GameConfig: Codable, Equatable {
     var renderer: Renderer = .auto
     var dxVersion: DXVersion = .dx11
-    /// Which Wine build to launch with. Stable is the Wine 11.x bundle; GPTK is
-    /// Apple's Game Porting Toolkit build with D3DMetal (best for DX11/DX12 games).
     var wineBuild: WineBuild = .stable
     var esync: Bool = true
     var metalHUD: Bool = false
     var extraEnvVars: [String: String] = [:]
     var launchArgs: String = ""
-    /// Exe filename relative to the game's steamapps/common/<installDir>/ folder.
-    /// When non-empty, Aether bypasses Steam's launcher and runs this executable directly.
-    /// Steam is still started in the background so steam_api.dll DRM can connect.
     var customExePath: String = ""
-    /// Add ddraw=n,b to WINEDLLOVERRIDES so cnc-ddraw intercepts DirectDraw calls.
-    /// Required for old DDraw games (e.g. PvZ) that need cnc-ddraw to translate DDraw→D3D9.
     var useDDrawWrapper: Bool = false
-    /// Enable DirectComposition (dcomp). Needed for games that use DComp-based
-    /// transparency (e.g. taskbar overlay idle games). Off by default because it
-    /// causes crashes in most games.
     var enableDComp: Bool = false
 
     enum Renderer: String, Codable, CaseIterable, Identifiable {
-        case auto = "Auto (D3DMetal)"
-        case dxvk = "DXVK"
+        case auto     = "Auto (D3DMetal)"
+        case dxvk     = "DXVK"
         case moltenVK = "MoltenVK"
         var id: String { rawValue }
     }
 
     enum WineBuild: String, Codable, CaseIterable, Identifiable {
         case stable = "Stable"
-        case gptk = "GPTK (D3DMetal)"
+        case gptk   = "GPTK (D3DMetal)"
+        case arm64  = "ARM64 + FEX"
         var id: String { rawValue }
+
+        /// True for builds that use D3DMetal builtins and cannot use DXVK/MoltenVK.
+        var usesD3DMetal: Bool { self == .gptk || self == .arm64 }
     }
 
     init() {}

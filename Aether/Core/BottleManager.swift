@@ -180,18 +180,21 @@ final class BottleManager: ObservableObject {
         phase = .downloadingWine
         append("Fetching Wine release info...")
 
-        let apiURL = URL(string: "https://api.github.com/repos/Gcenx/macOS_Wine_builds/releases/latest")!
+        // Pinned release: the patched DLLs in WinePatches/ are built for this exact version.
+        let tag = GPTKManager.stableWineVersion
+        let apiURL = URL(string: "https://api.github.com/repos/Gcenx/macOS_Wine_builds/releases/tags/\(tag)")!
         var request = URLRequest(url: apiURL)
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
 
         guard let (data, _) = try? await URLSession.shared.data(for: request),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let assets = json["assets"] as? [[String: Any]],
-              let asset = assets.first(where: {
-                  guard let name = $0["name"] as? String else { return false }
-                  // x86_64 builds end with osx64.tar.xz; exclude any arm64/aarch64 assets
-                  return name.hasSuffix("osx64.tar.xz")
-              }),
+              let asset = assets.first(where: { ($0["name"] as? String) == "wine-devel-\(tag)-osx64.tar.xz" })
+                  ?? assets.first(where: {
+                      guard let name = $0["name"] as? String else { return false }
+                      // x86_64 builds end with osx64.tar.xz; exclude any arm64/aarch64 assets
+                      return name.hasSuffix("osx64.tar.xz")
+                  }),
               let downloadURLStr = asset["browser_download_url"] as? String,
               let downloadURL = URL(string: downloadURLStr)
         else {
@@ -234,6 +237,9 @@ final class BottleManager: ObservableObject {
             phase = .failed("Wine extracted but binary not found. Try again.")
             return false
         }
+
+        let patched = GPTKManager.applyWinePatches()
+        if !patched.isEmpty { append("Applied \(patched.count) Wine patch file(s).") }
 
         append("Wine ready.")
         return true

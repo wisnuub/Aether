@@ -129,6 +129,8 @@ private struct InstallingStep: View {
         case .idle:              "Preparing..."
         case .downloadingWine:   "Downloading Wine..."
         case .extractingWine:    "Extracting Wine..."
+        case .downloadingARM64Wine: "Downloading ARM64 Wine..."
+        case .extractingARM64Wine:  "Extracting ARM64 Wine..."
         case .creatingPrefix:    "Creating Wine prefix..."
         case .downloadingSteam:  "Downloading Steam..."
         case .installingSteam:   "Installing Steam..."

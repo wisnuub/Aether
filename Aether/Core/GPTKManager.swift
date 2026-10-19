@@ -28,6 +28,65 @@ enum GPTKManager {
 
     static var isInstalled: Bool { winePath != nil }
 
+    /// Gcenx release tag Aether installs for the stable build. Pinned so the
+    /// patched DLLs in WinePatches/ always match the installed Wine.
+    static let stableWineVersion = "11.10"
+
+    /// CFBundleShortVersionString of the installed stable Wine bundle (e.g. "11.10").
+    static var installedStableWineVersion: String? {
+        let plist = appSupport.appendingPathComponent("Contents/Info.plist")
+        guard let dict = NSDictionary(contentsOf: plist) else { return nil }
+        return dict["CFBundleShortVersionString"] as? String
+    }
+
+    // MARK: - Wine patches
+
+    /// Install the patched builtin DLLs from the app bundle's WinePatches/wine-<version>/
+    /// into the stable Wine install, and into the bottle's system32 when given.
+    ///
+    /// Currently this is CW HACK 20760 (wow64cpu.dll): CrossOver's Rosetta 2 fix for the
+    /// 32-to-64-bit mode switch. Without it, 32-bit games (e.g. Plants vs. Zombies) crash
+    /// in wow64cpu shortly after start. See WinePatches/README.md.
+    ///
+    /// Idempotent: files are only copied when their contents differ. The first time a
+    /// file is replaced, the original is kept next to it as <name>.orig.
+    @discardableResult
+    static func applyWinePatches(bottle: Bottle? = nil) -> [String] {
+        guard let version = installedStableWineVersion,
+              let patchRoot = Bundle.main.resourceURL?
+                .appendingPathComponent("WinePatches/wine-\(version)"),
+              FileManager.default.fileExists(atPath: patchRoot.path)
+        else { return [] }
+
+        let fm = FileManager.default
+        let wineLib = appSupport.appendingPathComponent("Contents/Resources/wine/lib/wine")
+        var applied: [String] = []
+
+        // wine-<version>/<arch-dir>/<file>, mirroring lib/wine/<arch-dir>/<file>.
+        let archDirs = (try? fm.contentsOfDirectory(atPath: patchRoot.path)) ?? []
+        for arch in archDirs {
+            let srcDir = patchRoot.appendingPathComponent(arch)
+            let files = (try? fm.contentsOfDirectory(atPath: srcDir.path)) ?? []
+            for name in files where name.lowercased().hasSuffix(".dll") {
+                let src = srcDir.appendingPathComponent(name)
+                var targets = [wineLib.appendingPathComponent(arch).appendingPathComponent(name)]
+                // Prefix copies of 64-bit builtins live in system32.
+                if let bottle, arch == "x86_64-windows" {
+                    targets.append(bottle.driveCPath
+                        .appendingPathComponent("windows/system32").appendingPathComponent(name))
+                }
+                for dst in targets where fm.fileExists(atPath: dst.path) {
+                    if fm.contentsEqual(atPath: src.path, andPath: dst.path) { continue }
+                    let orig = dst.appendingPathExtension("orig")
+                    if !fm.fileExists(atPath: orig.path) { try? fm.copyItem(at: dst, to: orig) }
+                    try? fm.removeItem(at: dst)
+                    if (try? fm.copyItem(at: src, to: dst)) != nil { applied.append(dst.path) }
+                }
+            }
+        }
+        return applied
+    }
+
     // MARK: - GPTK (Game Porting Toolkit / D3DMetal) build
 
     /// Root of the Gcenx GPTK bundle, extracted with the same layout as Wine/.

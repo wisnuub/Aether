@@ -10,6 +10,7 @@ enum WineError: Error, LocalizedError {
     case wineBinaryNotFound
     case processFailed(Int32)
     case arm64WineNotFound
+    case steamLaunchFailed(String)
 
     var errorDescription: String? {
         switch self {
@@ -19,6 +20,8 @@ enum WineError: Error, LocalizedError {
             return "Wine process exited with code \(code)"
         case .arm64WineNotFound:
             return "ARM64 Wine not found. Download it in Setup, or install CrossOver 27 preview — Aether will detect it automatically."
+        case .steamLaunchFailed(let reason):
+            return "Steam could not start the game: \(reason)"
         }
     }
 }
@@ -120,12 +123,29 @@ struct WineProcess {
 
     // MARK: - Steam launch
 
+    /// Identifies the environment the Aether-started Steam is running with. Games are
+    /// child processes of Steam and inherit its environment, so a game whose per-game
+    /// settings (DLL overrides, HUD, extra env) differ needs Steam restarted first.
+    private static var runningSteamEnvKey: String?
+
+    private static func steamEnvKey(_ env: [String: String], winePath: URL) -> String {
+        let keys = ["WINEDLLOVERRIDES", "DXVK_HUD", "MTL_HUD_ENABLED", "WINEESYNC", "AETHER_CEF_FLAGS"]
+        var parts = [winePath.path] + keys.map { "\($0)=\(env[$0] ?? "")" }
+        let base = ProcessInfo.processInfo.environment
+        parts += env.filter { base[$0.key] != $0.value && !keys.contains($0.key) }
+                    .map { "\($0.key)=\($0.value)" }.sorted()
+        return parts.joined(separator: "\n")
+    }
+
     static func launchSteam(
         bottle: Bottle,
         gameID: Int? = nil,
         config: GameConfig,
         installDir: String? = nil
     ) async throws {
+        // CW HACK 20760 and any other version-matched Wine fixes. Cheap no-op when current.
+        GPTKManager.applyWinePatches(bottle: bottle)
+
         // ARM64 and GPTK both use D3DMetal builtins; DXVK/MoltenVK cannot work
         // in either build (no Vulkan driver). Coerce renderer to .auto so
         // dllOverrides() emits the right builtin set.
@@ -162,21 +182,37 @@ struct WineProcess {
         if config.esync { env["WINEESYNC"] = "1" }
         for (k, v) in config.extraEnvVars { env[k] = v }
 
-        // When launching a specific game, kill any running Steam/Wine processes first.
-        // The auto-launched Steam has a generic WINEDLLOVERRIDES; if we reuse it via
-        // Steam's single-instance IPC, the game inherits the wrong env and per-game
-        // DLL overrides (e.g. ddraw=n,b for cnc-ddraw) never apply.
-        if gameID != nil && steamIsAlreadyRunning() {
-            killWineProcesses()
-            try await Task.sleep(for: .seconds(1.5))
-        }
-
         guard let winePath = GPTKManager.winePath(for: config.wineBuild) else {
             throw config.wineBuild == .arm64 ? WineError.arm64WineNotFound : WineError.wineBinaryNotFound
         }
 
+        // 1. Make sure Steam is running with this game's environment.
+        //
+        // Steam is never cold-started with -applaunch: Steam fails the first launch
+        // of a session with AppError_49 ("Corrupt file signature") under Wine, and a
+        // cold start makes that first launch the game's. Instead Steam starts plain,
+        // logs in, and the game is sent over Steam's single-instance IPC below.
+        let envKey = steamEnvKey(env, winePath: winePath)
+        if gameID != nil && steamIsAlreadyRunning() && runningSteamEnvKey != envKey {
+            killWineProcesses(bottle: bottle)
+            try await Task.sleep(for: .seconds(1.5))
+        }
+        if !steamIsAlreadyRunning() {
+            let loginLogOffset = fileSize(steamLog(bottle, "connection_log.txt"))
+            try runSteamExe(bottle: bottle, winePath: winePath, env: env,
+                            args: ["-no-cef-sandbox", "-forcedesktopscaling", "1", "-noverifyfiles"])
+            runningSteamEnvKey = envKey
+            guard gameID != nil else { return }
+            await waitForSteamLogin(bottle: bottle, since: loginLogOffset, timeout: 120)
+        } else if gameID == nil {
+            // Already running: Steam.exe forwards to the running instance and shows its window.
+            try runSteamExe(bottle: bottle, winePath: winePath, env: env, args: [])
+            return
+        }
+        guard let gameID else { return }
+
         // Direct-exe path: bypasses Steam's launcher (which silently fails for some games).
-        // Steam is started in the background first so steam_api.dll DRM can connect.
+        // Steam is already running and logged in, so steam_api.dll DRM can connect.
         if let installDir, !config.customExePath.isEmpty {
             let exeURL = bottle.steamLibraryPath
                 .appendingPathComponent("common/\(installDir)/\(config.customExePath)")
@@ -184,28 +220,12 @@ struct WineProcess {
                 ? []
                 : config.launchArgs.split(separator: " ").map(String.init)
 
-            if !steamIsAlreadyRunning() {
-                let bgSteam = Process()
-                bgSteam.executableURL = winePath
-                bgSteam.arguments     = [bottle.steamExePath.path,
-                                         "-no-cef-sandbox", "-noverifyfiles"]
-                bgSteam.environment   = env
-                try bgSteam.run()
-                // steamwebhelper args contain "-steamid=0" until Steam finishes login.
-                // A non-zero steamid means the IPC pipe is live and SteamAPI_Init will succeed.
-                await waitForSteamLogin(timeout: 60)
-            } else {
-                try await Task.sleep(for: .seconds(1.0))
-            }
-
             // Prevent SteamAPI_RestartAppIfNecessary from requesting a Steam relaunch.
             // Without these env vars, old Steamworks SDKs see Steam running + no SteamAppId,
             // assume they weren't launched by Steam, and exit to ask Steam to relaunch them --
             // which shows "Stop" in Steam but no window, since Steam's own launch fails too.
-            if let gameID {
-                env["SteamAppId"]  = "\(gameID)"
-                env["SteamGameId"] = "\(gameID)"
-            }
+            env["SteamAppId"]  = "\(gameID)"
+            env["SteamGameId"] = "\(gameID)"
 
             let game = Process()
             game.executableURL       = winePath
@@ -216,23 +236,86 @@ struct WineProcess {
             return
         }
 
-        let process = Process()
-        process.executableURL = winePath
-
-        // Always use Steam.exe -applaunch: Steam handles single-instance IPC itself.
-        // wine explorer.exe steam://rungameid/<id> fails in Wine (explorer can't route
-        // the steam:// protocol -- produces "Failed to create PIDL" and game never starts).
-        var args = [bottle.steamExePath.path,
-                    "-no-cef-sandbox", "-forcedesktopscaling", "1", "-noverifyfiles"]
-        if let gameID { args += ["-applaunch", "\(gameID)"] }
+        // 2. Ask the running Steam to launch the game, retrying the signature error.
+        //
+        // Always Steam.exe -applaunch: wine explorer.exe steam://rungameid/<id> fails in
+        // Wine (explorer can't route the steam:// protocol -- produces "Failed to create
+        // PIDL" and the game never starts).
+        var args = ["-applaunch", "\(gameID)"]
         if !config.launchArgs.isEmpty {
             args += config.launchArgs.split(separator: " ").map(String.init)
         }
 
-        process.arguments   = args
-        process.environment = env
+        let maxAttempts = 3
+        for attempt in 1...maxAttempts {
+            let consoleOffset = fileSize(steamLog(bottle, "console_log.txt"))
+            try runSteamExe(bottle: bottle, winePath: winePath, env: env, args: args)
+            switch await waitForLaunchResult(bottle: bottle, gameID: gameID,
+                                             since: consoleOffset, timeout: 90) {
+            case .started, .timedOut:
+                return
+            case .signatureError where attempt < maxAttempts:
+                try await Task.sleep(for: .seconds(2))
+                continue
+            case .signatureError:
+                throw WineError.steamLaunchFailed("AppError_49 (corrupt file signature)")
+            case .failed(let reason):
+                throw WineError.steamLaunchFailed(reason)
+            }
+        }
+    }
 
+    private static func runSteamExe(bottle: Bottle, winePath: URL,
+                                    env: [String: String], args: [String]) throws {
+        let process = Process()
+        process.executableURL = winePath
+        process.arguments     = [bottle.steamExePath.path] + args
+        process.environment   = env
         try process.run()
+    }
+
+    // MARK: - Steam log watching
+
+    private enum LaunchResult { case started, signatureError, failed(String), timedOut }
+
+    private static func steamLog(_ bottle: Bottle, _ name: String) -> URL {
+        bottle.steamPath.appendingPathComponent("logs/\(name)")
+    }
+
+    private static func fileSize(_ url: URL) -> UInt64 {
+        (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? UInt64) ?? 0
+    }
+
+    /// Text appended to a log since `offset`. Restarts from 0 if Steam rotated the file.
+    private static func appendedText(_ url: URL, since offset: UInt64) -> String {
+        guard let handle = try? FileHandle(forReadingFrom: url) else { return "" }
+        defer { try? handle.close() }
+        let start = fileSize(url) < offset ? 0 : offset
+        try? handle.seek(toOffset: start)
+        let data = (try? handle.readToEnd()) ?? Data()
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    /// Reads Steam's console_log.txt for the outcome of the -applaunch just sent.
+    private static func waitForLaunchResult(bottle: Bottle, gameID: Int,
+                                            since offset: UInt64,
+                                            timeout: TimeInterval) async -> LaunchResult {
+        let log = steamLog(bottle, "console_log.txt")
+        let tag = "[AppID \(gameID), ActionID"
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            for line in appendedText(log, since: offset).split(separator: "\n") {
+                if line.contains("Game process added : AppID \(gameID) ") { return .started }
+                guard line.contains(tag) else { continue }
+                if line.contains("LaunchApp failed with AppError_49") { return .signatureError }
+                if let r = line.range(of: "LaunchApp failed with ") {
+                    return .failed(String(line[r.upperBound...]).trimmingCharacters(in: .whitespaces))
+                }
+                if line.contains("LaunchApp changed task to Completed") { return .started }
+            }
+            try? await Task.sleep(for: .milliseconds(500))
+        }
+        return .timedOut
     }
 
     // MARK: - Desktop / installer / custom exe
@@ -355,10 +438,28 @@ struct WineProcess {
 
     // MARK: - Process management
 
-    /// Kill all Wine and Steam processes. Scoped to generic infrastructure names
-    /// only — game-specific process names belong in per-game config, not here.
+    /// Kill all Wine and Steam processes. With a bottle, first asks that prefix's
+    /// wineserver to terminate every process in the session (games included, whatever
+    /// their exe name). The name-based pass then catches leftovers and orphans.
     @discardableResult
-    static func killWineProcesses() {
+    static func killWineProcesses(bottle: Bottle? = nil) {
+        if let bottle {
+            // Only the wineserver matching the running Wine version will accept -k;
+            // the others fail with a protocol mismatch, which is harmless.
+            let servers = [GPTKManager.winePath, GPTKManager.gptkWinePath, GPTKManager.arm64WinePath]
+                .compactMap { $0?.deletingLastPathComponent().appendingPathComponent("wineserver") }
+                .filter { FileManager.default.isExecutableFile(atPath: $0.path) }
+            for server in servers {
+                let k = Process()
+                k.executableURL  = server
+                k.arguments      = ["-k"]
+                k.environment    = ["WINEPREFIX": bottle.path.path]
+                k.standardOutput = FileHandle.nullDevice
+                k.standardError  = FileHandle.nullDevice
+                try? k.run()
+                k.waitUntilExit()
+            }
+        }
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/bin/sh")
         task.arguments = ["-c",
@@ -382,24 +483,17 @@ struct WineProcess {
         return task.terminationStatus == 0
     }
 
-    /// Polls steamwebhelper until the steamid is non-zero (login complete) or timeout.
-    /// Uses cooperative Task.sleep — safe to call from async context without blocking.
-    private static func waitForSteamLogin(timeout: TimeInterval) async {
+    /// Waits until Steam logs a completed logon in connection_log.txt after `offset`,
+    /// or until timeout (e.g. the user still has to sign in). Cooperative Task.sleep.
+    private static func waitForSteamLogin(bottle: Bottle, since offset: UInt64,
+                                          timeout: TimeInterval) async {
+        let log = steamLog(bottle, "connection_log.txt")
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
-            let task = Process()
-            task.executableURL = URL(fileURLWithPath: "/usr/bin/pgrep")
-            task.arguments     = ["-a", "-f", "steamwebhelper"]
-            let pipe = Pipe()
-            task.standardOutput = pipe
-            task.standardError  = Pipe()
-            try? task.run()
-            task.waitUntilExit()
-            let output = String(data: pipe.fileHandleForReading.readDataToEndOfFile(),
-                                encoding: .utf8) ?? ""
-            // steamwebhelper args contain "-steamid=0" until login completes
-            if output.contains("steamid=") && !output.contains("steamid=0") { return }
-            try? await Task.sleep(for: .seconds(2))
+            if appendedText(log, since: offset).contains("RecvMsgClientLogOnResponse() : processing complete") {
+                return
+            }
+            try? await Task.sleep(for: .seconds(1))
         }
     }
 }

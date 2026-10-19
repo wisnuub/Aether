@@ -238,7 +238,7 @@ struct LibraryView: View {
             } else {
                 Button("Launch") {
                     guard let bottle = appState.bottle else { return }
-                    try? WineProcess.launchSteam(bottle: bottle, gameID: nil, config: GameConfig())
+                    Task { try? await WineProcess.launchSteam(bottle: bottle, gameID: nil, config: GameConfig()) }
                 }
                 .buttonStyle(.plain)
                 .font(.caption)

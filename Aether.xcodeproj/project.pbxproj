@@ -23,6 +23,8 @@
 		F1A622359F70455BA5390375 /* GameDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E74FE4E5E1F47EAB04A8D9E /* GameDetailView.swift */; };
 		3DB67A9A01144C89A99A12E0813D2ACB /* InstalledApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FBFEAA9B2DA4B2CABD0F38A9520D81D /* InstalledApp.swift */; };
 		625D346FE320459B9111C64B574FD28D /* SoftwareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C26E7DD14934A7F9F0ACF8D16E7A78F /* SoftwareView.swift */; };
+		6B8F2D4C0E3A5F7B9C1D2E3F /* WinePatches in Resources */ = {isa = PBXBuildFile; fileRef = 5A7E1C3B9D2F4E6A8B0C1D2E /* WinePatches */; };
+		7C9E3A1B5D2F4A6B8C0D1E2F /* NativePortManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D0F4B2C6E3A5B7C9D1E2F30 /* NativePortManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,6 +46,8 @@
 		7FBFEAA9B2DA4B2CABD0F38A9520D81D /* InstalledApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstalledApp.swift; sourceTree = "<group>"; };
 		6C26E7DD14934A7F9F0ACF8D16E7A78F /* SoftwareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoftwareView.swift; sourceTree = "<group>"; };
 		F9A2BC1244CF47B2A0E58D5F /* Aether.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Aether.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5A7E1C3B9D2F4E6A8B0C1D2E /* WinePatches */ = {isa = PBXFileReference; lastKnownFileType = folder; path = WinePatches; sourceTree = "<group>"; };
+		8D0F4B2C6E3A5B7C9D1E2F30 /* NativePortManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativePortManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,6 +69,7 @@
 				DF0E737F71E64876B8A6B8C5 /* SteamManager.swift */,
 				883927A0602D4C6B9C65433C /* WineProcess.swift */,
 				DD4B8E1A3C2F4D5E87F1A923 /* SteamMonitor.swift */,
+				8D0F4B2C6E3A5B7C9D1E2F30 /* NativePortManager.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -78,6 +83,7 @@
 				2CF4508B58CF47CDA51DEEC4 /* Models */,
 				AF288486FB1D4AE58D176376 /* Views */,
 				B40347EA58334C95B9A4581F /* Assets.xcassets */,
+				5A7E1C3B9D2F4E6A8B0C1D2E /* WinePatches */,
 				10B068892EEC4DDFAC06CE04 /* Info.plist */,
 			);
 			path = Aether;
@@ -131,6 +137,7 @@
 				6A3667E700B24890AEEAF4D5 /* Sources */,
 				A278611E95E24543A45F9179 /* Frameworks */,
 				C5910E0CCE9E4CFDA239CC88 /* Resources */,
+				9E1A5C3D7F4B6C8D0E2F3041 /* Build Native Ports */,
 			);
 			buildRules = (
 			);
@@ -180,10 +187,29 @@
 			buildActionMask = 2147483647;
 			files = (
 				AA14DA4EDE6A43A2AFD6130E /* Assets.xcassets in Resources */,
+				6B8F2D4C0E3A5F7B9C1D2E3F /* WinePatches in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		9E1A5C3D7F4B6C8D0E2F3041 /* Build Native Ports */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Build Native Ports";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "# Native Apple Silicon game runtimes shipped in Aether.app (see NativePorts/).\nexport AETHER_NATIVE_BUILD_DIR=\"$PROJECT_TEMP_DIR/NativePorts/PvZ\"\n\"$SRCROOT/NativePorts/PvZ/build-macos.sh\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/NativePorts/PvZ\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		6A3667E700B24890AEEAF4D5 /* Sources */ = {
@@ -196,6 +222,7 @@
 				A9A733D230624981BE52C58A /* BottleManager.swift in Sources */,
 				E56C801E1A274B518C460B97 /* SteamManager.swift in Sources */,
 				8466580A18A24C9B902325F9 /* WineProcess.swift in Sources */,
+				7C9E3A1B5D2F4A6B8C0D1E2F /* NativePortManager.swift in Sources */,
 				ECC2E3E9010345AD9B55740E /* Bottle.swift in Sources */,
 				3B724CBB7DE94F6F8D0031FF /* SteamGame.swift in Sources */,
 				AE13075E93724134A56D87A9 /* AppState.swift in Sources */,
@@ -251,7 +278,7 @@
 				DEVELOPMENT_TEAM = 392255K3LJ;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -309,7 +336,7 @@
 				DEVELOPMENT_TEAM = 392255K3LJ;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;

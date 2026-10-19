@@ -77,6 +77,14 @@ struct GameConfig: Codable, Equatable {
     var customExePath: String = ""
     var useDDrawWrapper: Bool = false
     var enableDComp: Bool = false
+    /// Native runtime when Aether ships one for this game (see NativePortManager); Wine otherwise.
+    var runtime: Runtime = .native
+
+    enum Runtime: String, Codable, CaseIterable, Identifiable {
+        case native = "Native (Apple Silicon)"
+        case wine   = "Wine"
+        var id: String { rawValue }
+    }
 
     enum Renderer: String, Codable, CaseIterable, Identifiable {
         case auto     = "Auto (D3DMetal)"
@@ -111,6 +119,7 @@ struct GameConfig: Codable, Equatable {
         customExePath   = (try? c.decode(String.self,    forKey: .customExePath))   ?? ""
         useDDrawWrapper = (try? c.decode(Bool.self,      forKey: .useDDrawWrapper)) ?? false
         enableDComp     = (try? c.decode(Bool.self,      forKey: .enableDComp))     ?? false
+        runtime         = (try? c.decode(Runtime.self,   forKey: .runtime))         ?? .native
     }
 
     enum DXVersion: String, Codable, CaseIterable, Identifiable {

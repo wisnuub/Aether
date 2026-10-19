@@ -76,6 +76,14 @@ struct GameDetailView: View {
                         Text(game.name)
                             .font(.title.bold())
                             .shadow(radius: 8)
+                        if runsNative {
+                            Label("Native", systemImage: "apple.logo")
+                                .font(.caption2)
+                                .foregroundStyle(.green)
+                                .padding(.horizontal, 6).padding(.vertical, 2)
+                                .background(.green.opacity(0.15))
+                                .clipShape(Capsule())
+                        }
                     }
                     if game.isCustom {
                         Text(game.customExeFullPath)
@@ -148,7 +156,60 @@ struct GameDetailView: View {
         }
     }
 
+    /// Native port for this game, if this Aether build ships one.
+    private var nativePort: NativePort? {
+        game.isCustom ? nil : NativePortManager.port(for: game.id)
+    }
+
+    private var runsNative: Bool {
+        nativePort != nil && game.config.runtime == .native
+    }
+
+    private var runtimeSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Runtime")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Picker("Runtime", selection: $game.config.runtime) {
+                    ForEach(GameConfig.Runtime.allCases) { r in
+                        Text(r.rawValue).tag(r)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 320)
+            }
+            if game.config.runtime == .native {
+                Text("Runs as a native Apple Silicon app through Steam for macOS, with no Wine. Progress syncs with Steam Cloud in both directions, achievements unlock on your account, and Steam counts the playtime. The first launch copies the game files and sets the game up in Steam for macOS.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                Text("Runs the Windows version through Wine and Aether's Steam.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    @ViewBuilder
     private var configSection: some View {
+        if nativePort != nil {
+            VStack(alignment: .leading, spacing: 24) {
+                runtimeSection
+                if !runsNative {
+                    Divider()
+                    wineConfigSection
+                }
+            }
+            .padding(24)
+        } else {
+            wineConfigSection.padding(24)
+        }
+    }
+
+    private var wineConfigSection: some View {
         VStack(alignment: .leading, spacing: 24) {
             Text("Graphics")
                 .font(.headline)
@@ -286,7 +347,6 @@ struct GameDetailView: View {
 
             EnvVarEditor(vars: $game.config.extraEnvVars)
         }
-        .padding(24)
     }
 
     private var backgroundGradient: some View {
@@ -311,7 +371,12 @@ struct GameDetailView: View {
         Task.detached(priority: .userInitiated) {
             var err: String?
             do {
-                if snapshot.isCustom {
+                if !snapshot.isCustom,
+                   snapshot.config.runtime == .native,
+                   let port = NativePortManager.port(for: snapshot.id) {
+                    try await NativePortManager.launch(port, bottle: bottle,
+                                                       gameInstallDir: snapshot.installDir)
+                } else if snapshot.isCustom {
                     try WineProcess.launchCustomExe(
                         bottle: bottle,
                         exePath: snapshot.customExeFullPath,

@@ -5,3 +5,6 @@ DerivedData/
 xcuserdata/
 *.moved-aside
 *.orig
+
+# Native port build output (built by Xcode into DerivedData)
+NativePorts/*/build/
